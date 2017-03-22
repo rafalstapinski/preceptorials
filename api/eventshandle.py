@@ -1,5 +1,9 @@
 import sys
 import psycopg2
+import unicodedata
+# from exceptions import UnicodeWarning
+# from warnings import filterwarnings
+# filterwarnings(action="error", category=UnicodeWarning)
 
 class EventsHandle():
 
@@ -25,8 +29,11 @@ class EventsHandle():
 
         self.cur = self.con.cursor()
 
-    def addRow(self):
-        self.toinsert.append((self.title, self.link, self.description, self.date, self.location, self.address, self.speaker, self.sponsor, self.fee, self.category))
+    def sanitizeRow(self):
+        self.toinsert = [self.title, self.link, self.description, self.date, self.location, self.address, self.speaker, self.sponsor, self.fee, self.department, 0]
+
+        self.toinsert = [el.encode('utf-8') if type(el) == unicode else el for el in self.toinsert]
+
         self.title = None
         self.link = None
         self.description = None
@@ -37,23 +44,58 @@ class EventsHandle():
         self.sponsor = None
         self.online = False
         self.fee = None
-        self.category = None
+        self.department = None
 
-    def insertEvents(self):
+    def insertRow(self, column, identifier):
+
+        self.sanitizeRow()
 
         #query = 'INSERT INTO events (title, link, description, ts, location, address, speaker, sponsor, fee, category) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
 
-        #args_str = ','.join(cur.mogrify("(%s,%s,%s,%s,%s,%s,%s,%s,%s,%)", x) for x in tup)
+        # self.cur.execute(query % (self.title, self.link, self.description, self.date, self.location, self.address, self.speaker, self.sponsor, self.fee, self.category))
 
-        #self.con.commit()
-        #self.toinsert = []
-        pass
+        self.cur.execute("SELECT * FROM events WHERE %s = '%s'" % (column, identifier))
+        rows = self.cur.fetchall()
 
-    def insertRow(self):
+        outdated = False
 
-        query = '''INSERT INTO events (title, link, description, ts, location, address, speaker, sponsor, fee, category)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''' %
-                (self.title, self.link, self.description, self.date, self.location, self.address, self.speaker, self.sponsor, self.fee, self.category)
+        if len(rows) > 0:
+
+            for row in rows:
+                for col in row:
+                    if row.index(col) != 0:
+
+                        if col == None or type(col) == int:
+                            if col != self.toinsert[row.index(col) - 1]:
+                                outdated = True
+                        else:
+                            if col != self.toinsert[row.index(col) - 1]:
+                                outdated = True
+
+                if outdated:
+                    self.cur.execute("UPDATE events SET version = version + 1 WHERE %s = '%s'" % (column, identifier))
+                    print "updating old verion"
+
+            if outdated:
+                query = 'INSERT INTO events (title, link, description, ts, location, address, speaker, sponsor, fee, department, version) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+                self.cur.execute(query, self.toinsert)
+                print "inserting updated row"
+
+        else:
+            query = 'INSERT INTO events (title, link, description, ts, location, address, speaker, sponsor, fee, department, version) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+            self.cur.execute(query, self.toinsert)
+            print "inserting for the first itme"
+
+            self.cur.execute("SELECT * FROM departments WHERE department = '%s'" % self.toinsert[9])
+
+            if len(self.cur.fetchall()) == 0:
+                self.cur.execute("INSERT INTO departments (department) VALUES ('%s')" % self.toinsert[9])
+
+            # change department table and column to be relational
+
+    def commitRows(self):
+
+        self.con.commit()
 
     def reset(self):
         self.toinsert = []
