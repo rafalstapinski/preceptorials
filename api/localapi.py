@@ -76,11 +76,7 @@ class events_get():
         #
         # print events
 
-# if __name__ == '__main__':
-#     app = web.application(urls, globals())
-#     app.notfound = notfound
-#     app.run()
-
-app = web.application(urls, globals())
-app.notfound = notfound
-application = app.wsgifunc()
+if __name__ == '__main__':
+    app = web.application(urls, globals())
+    app.notfound = notfound
+    app.run()

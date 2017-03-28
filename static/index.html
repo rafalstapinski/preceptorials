@@ -1,0 +1,154 @@
+<!DOCTYPE html >
+
+<html >
+  <head >
+    <title >RUPreceptorials</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
+
+    <link href="./res/ext/datepicker/css/datepicker.min.css" rel="stylesheet" />
+    <script src="./res/ext/datepicker/js/datepicker.min.js" ></script>
+  </head>
+  <body >
+    <form id="filter" >
+      <input type="text" id="departments" />
+      <input type="text" id="startdate" class="datepicker" />
+      <input type="text" id="enddate" class="datepicker"/>
+      <input type="submit" value="search" />
+    </form>
+    <table class="events" >
+      <tr >
+        <td >
+          Title
+        </td>
+        <td >
+          Description
+        </td>
+        <td >
+          Speaker
+        </td>
+        <td >
+          Department
+        </td>
+        <td >
+          Where
+        </td>
+        <td >
+          When
+        </td>
+      </tr>
+    </table>
+    <script >
+
+      $(document).ready(function() {
+
+        $('.datepicker').datepicker({
+          format: 'mm-dd-yyyy'
+        });
+
+        var ts = new Date()
+        $('#startdate').val(pad(ts.getMonth() + 1, 2) + '-' + pad(ts.getDate(), 2) + '-' + ts.getFullYear())
+
+        ts.setMonth(ts.getMonth() + 1)
+        $('#enddate').val(pad(ts.getMonth() + 1, 2) + '-' + pad(ts.getDate(), 2) + '-' + ts.getFullYear())
+
+
+        var startdate = Math.floor(new Date($('#startdate').val()) / 1000)
+        var enddate = Math.floor(new Date($('#enddate').val()) / 1000)
+
+        var filters = {
+          'date': {
+            'start': startdate,
+            'end': enddate
+          }
+        }
+
+        get_events(filters)
+
+      })
+
+      $('#filter').submit(function(e) {
+
+        e.preventDefault()
+
+        var startdate = Math.floor(new Date($('#startdate').val()) / 1000)
+        var enddate = Math.floor(new Date($('#enddate').val()) / 1000)
+
+        var filters = {
+          'date': {
+            'start': startdate,
+            'end': enddate
+          }
+        }
+
+        get_events(filters)
+
+      })
+
+      function output(events) {
+
+        $('.events').find('tr:gt(0)').remove()
+
+        console.log(events)
+
+        console.log(events[0].title)
+
+        for (var i = 0; i < events.length; i++) {
+          var when = new Date(events[i].ts * 1000)
+
+          var formatted_time = when.getMonth() + 1 + '-' +
+                                when.getDate() + '-' +
+                                when.getFullYear() + ' ' +
+                                when.getHours() + ':' +
+                                when.getMinutes()
+
+          var row = '\
+          <tr >\
+            <td >\
+              ' + events[i].title + '\
+            </td>\
+            <td >\
+              ' + events[i].description + '\
+            </td>\
+            <td >\
+              ' + events[i].speaker + '\
+            </td>\
+            <td >\
+              ' + events[i].department + '\
+            </td>\
+            <td >\
+              ' + events[i].location + '\
+            </td>\
+            <td >\
+              ' + formatted_time + '\
+            </td>\
+          </tr>'
+          $('.events tr:last').after(row)
+        }
+
+      }
+
+      function get_events(filters) {
+        $.ajax({
+          type: 'post',
+          url: 'http://localhost:8080/api/events/get',
+          data: {
+            'filters': JSON.stringify(filters)
+          },
+          success: function(data) {
+            output(data['payload']['events'])
+          },
+          error: function(data) {
+            console.log(data)
+          }
+        })
+      }
+
+      function pad(n, width, z) {
+        z = z || '0'
+        n = n + ''
+        return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n
+      }
+
+    </script>
+  </body>
+</html>
