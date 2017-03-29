@@ -7,8 +7,8 @@ import urllib
 
 from web.wsgiserver import CherryPyWSGIServer
 
-# CherryPyWSGIServer.ssl_certificate = "/etc/letsencrypt/live/stapinski.co/fullchain.pem"
-# CherryPyWSGIServer.ssl_private_key = "/etc/letsencrypt/live/stapinski.co/privkey.pem"
+CherryPyWSGIServer.ssl_certificate = "/etc/letsencrypt/live/rupreceptorials.com/fullchain.pem"
+CherryPyWSGIServer.ssl_private_key = "/etc/letsencrypt/live/rupreceptorials.com/privkey.pem"
 
 def write(payload, status):
     return json.dumps({'payload': payload, 'status': status})
@@ -21,7 +21,7 @@ def new_request(request):
     web.header('Access-Control-Allow-Origin', '*')
 
 urls = (
-    '/preceptorials/api/events/get', 'events_get',
+    '/api/events/get', 'events_get',
 )
 
 class events_get():
@@ -52,7 +52,7 @@ class events_get():
 
 
         db = web.database(dbn='postgres', db=Config.dbname, user=Config.dbuser, pw=Config.dbpass)
-        events = db.select('events', dict(startdate=startdate, enddate=enddate), where='ts > $startdate AND ts < $enddate')
+        events = db.select('events', dict(startdate=startdate, enddate=enddate), where='ts > $startdate AND ts < $enddate AND version = 0')
 
         result = []
 
@@ -64,22 +64,6 @@ class events_get():
                             'fee': event.fee, 'department': event.department})
 
         return write({'message': 'List of events matching criteria. ', 'events': result}, 200)
-
-
-        # departments to relation
-
-        # query = 'SELECT * FROM events WHERE department = %s'
-        #
-        # db = web.database(dbn='postgres', db=Config.dbname, user=Config.dbuser, pw=Config.dbpass)
-        #
-        # events = db.select('events', dict(department='ruevents'), where='department = $dept' )
-        #
-        # print events
-
-# if __name__ == '__main__':
-#     app = web.application(urls, globals())
-#     app.notfound = notfound
-#     app.run()
 
 app = web.application(urls, globals())
 app.notfound = notfound

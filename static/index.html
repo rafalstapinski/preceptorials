@@ -10,10 +10,10 @@
   </head>
   <body >
     <form id="filter" >
-      <input type="text" id="departments" />
+      <input type="text" placeholder="department" id="departments" />
       <input type="text" id="startdate" class="datepicker" />
       <input type="text" id="enddate" class="datepicker"/>
-      <input type="submit" value="search" />
+      <input type="submit" value="filter" />
     </form>
     <table class="events" >
       <tr >
@@ -42,14 +42,14 @@
       $(document).ready(function() {
 
         $('.datepicker').datepicker({
-          format: 'mm-dd-yyyy'
+          format: 'mm/dd/yyyy'
         });
 
         var ts = new Date()
-        $('#startdate').val(pad(ts.getMonth() + 1, 2) + '-' + pad(ts.getDate(), 2) + '-' + ts.getFullYear())
+        $('#startdate').val(pad(ts.getMonth() + 1, 2) + '/' + pad(ts.getDate(), 2) + '/' + ts.getFullYear())
 
         ts.setMonth(ts.getMonth() + 1)
-        $('#enddate').val(pad(ts.getMonth() + 1, 2) + '-' + pad(ts.getDate(), 2) + '-' + ts.getFullYear())
+        $('#enddate').val(pad(ts.getMonth() + 1, 2) + '/' + pad(ts.getDate(), 2) + '/' + ts.getFullYear())
 
 
         var startdate = Math.floor(new Date($('#startdate').val()) / 1000)
@@ -84,13 +84,20 @@
 
       })
 
+      function compare(a, b) {
+        if (a.ts < b.ts) {
+          return -1
+        } else if (a.ts > b.ts) {
+          return 1
+        }
+        return 0
+      }
+
       function output(events) {
 
         $('.events').find('tr:gt(0)').remove()
 
-        console.log(events)
-
-        console.log(events[0].title)
+        events.sort(compare)
 
         for (var i = 0; i < events.length; i++) {
           var when = new Date(events[i].ts * 1000)
@@ -124,17 +131,17 @@
           </tr>'
           $('.events tr:last').after(row)
         }
-
       }
 
       function get_events(filters) {
         $.ajax({
           type: 'post',
-          url: 'http://localhost:8080/api/events/get',
+          url: 'https://rupreceptorials.com/api/events/get',
           data: {
             'filters': JSON.stringify(filters)
           },
           success: function(data) {
+            console.log(data)
             output(data['payload']['events'])
           },
           error: function(data) {
