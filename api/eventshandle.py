@@ -34,21 +34,11 @@ class EventsHandle():
 
         self.toinsert = [el.encode('utf-8') if type(el) == unicode else el for el in self.toinsert]
 
-        self.title = None
-        self.link = None
-        self.description = None
-        self.date = 0
-        self.location = None
-        self.address = None
-        self.speaker = None
-        self.sponsor = None
-        self.online = False
-        self.fee = None
-        self.department = None
-
     def insertRow(self, column, identifier):
 
         self.sanitizeRow()
+
+        self.reset()
 
         #query = 'INSERT INTO events (title, link, description, ts, location, address, speaker, sponsor, fee, category) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
 
@@ -96,6 +86,7 @@ class EventsHandle():
     def commitRows(self):
 
         self.con.commit()
+        self.reset()
 
     def reset(self):
         self.toinsert = []

@@ -7,6 +7,7 @@ from config import Config
 from lxml import etree
 from eventshandle import EventsHandle
 import sys
+import dateutil.parser
 handle = EventsHandle(Config.dbname, Config.dbuser, Config.dbhost, Config.dbpass)
 
 ########### Rutgers seminars ###########
@@ -49,3 +50,28 @@ handle = EventsHandle(Config.dbname, Config.dbuser, Config.dbhost, Config.dbpass
 #             handle.insertRow('link', handle.link)
 #
 #     handle.commitRows()
+
+
+url = 'http://www.physics.rutgers.edu/colloquium/'
+r = requests.get(url)
+soup = BeautifulSoup(r.text, 'lxml')
+
+table = soup.find('table')
+
+for row in table.find_all('tr')[1:]:
+
+    columns = row.find_all('td')
+
+    column1 = columns[0]
+    datestr = ''
+    for i in column1.contents:
+        if i != u'\n' and type(i) != Tag:
+            datestr += i.strip() + ' '
+    datestr += str(datetime.now().year) + ' 16:30'
+    handle.ts = dateutil.parser.parse(datestr).strftime('%s')
+
+    column2 = columns[1]
+
+    if 'no colloquium' in column2.text.lower().strip():
+        print 'no q'
+        print column2
