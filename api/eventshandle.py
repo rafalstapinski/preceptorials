@@ -31,18 +31,11 @@ class EventsHandle():
 
     def sanitizeRow(self):
         self.toinsert = [self.title, self.link, self.description, self.date, self.location, self.address, self.speaker, self.sponsor, self.fee, self.department, 0]
-
         self.toinsert = [el.encode('utf-8') if type(el) == unicode else el for el in self.toinsert]
 
     def insertRow(self, column, identifier):
 
         self.sanitizeRow()
-
-        self.reset()
-
-        #query = 'INSERT INTO events (title, link, description, ts, location, address, speaker, sponsor, fee, category) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
-
-        # self.cur.execute(query % (self.title, self.link, self.description, self.date, self.location, self.address, self.speaker, self.sponsor, self.fee, self.category))
 
         self.cur.execute("SELECT * FROM events WHERE %s = '%s'" % (column, identifier))
         rows = self.cur.fetchall()
@@ -82,6 +75,8 @@ class EventsHandle():
                 self.cur.execute("INSERT INTO departments (department) VALUES ('%s')" % self.toinsert[9])
 
             # change department table and column to be relational
+
+        self.reset()
 
     def commitRows(self):
 
