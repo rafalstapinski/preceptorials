@@ -20,6 +20,7 @@ class EventsHandle():
         self.online = False
         self.fee = None
         self.category = None
+        self.ignore = False
 
         try:
             self.con = psycopg2.connect("dbname='%s' user='%s' host='%s' password='%s'" % (dbname, dbuser, dbhost, dbpass))
@@ -96,3 +97,4 @@ class EventsHandle():
         self.online = False
         self.fee = None
         self.category = None
+        self.ignore = False

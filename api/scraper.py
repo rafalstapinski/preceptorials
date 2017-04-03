@@ -9,6 +9,7 @@ from eventshandle import EventsHandle
 import sys
 import dateutil.parser
 handle = EventsHandle(Config.dbname, Config.dbuser, Config.dbhost, Config.dbpass)
+import re
 
 class Scraper:
 
@@ -54,7 +55,7 @@ class Scraper:
                     handle.address = element.text
                 elif element.tag == '{http://ruevents.rutgers.edu/events}city' and not handle.online:
                     handle.address += ', ' + element.text
-                elif element.tag == '{http://ruevents.rutgers.edu/events}state' and not handle.online:
+                elif element.stag == '{http://ruevents.rutgers.edu/events}state' and not handle.online:
                     handle.address += ', ' + element.text
                 elif element.tag == '{http://ruevents.rutgers.edu/events}speaker':
                     handle.speaker = element.text
@@ -85,13 +86,36 @@ class Scraper:
                 if i != u'\n' and type(i) != Tag:
                     datestr += i.strip() + ' '
             datestr += str(datetime.now().year) + ' 16:30'
+
             handle.ts = dateutil.parser.parse(datestr).strftime('%s')
 
             column2 = columns[1]
 
-            if 'no colloquium' in column2.text.lower().strip():
-                print 'no q'
-                print column2
+            titlestr = ''
+
+            a = column2.find('a')
+
+            if a is not None:
+                handle.link = 'http://www.physica.rutgers.edu/colloquium/' + a.attrs['href']
+                print handle.link
+
+            # for c in column2.contents:
+            #     if type(c) is not Tag:
+            #         t = ' '.join(c.split())
+            #         if 'no colloquium' in t.lower():
+            #             handle.ignore = True
+            #             break
+            #         elif t != ' ':
+            #             titlestr += t
+
+            # if not handle.ignore:
+            #     print titlestr, '---'
+
+            handle.reset()
+
+            # print column2.contents
+            #
+            # print titlestr
 
 
 scraper = Scraper('physics_colloquium')
